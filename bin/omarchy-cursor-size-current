@@ -4,7 +4,7 @@
 # omarchy:examples=omarchy cursor size current
 
 # shellcheck source=omarchy-cursor-config
-source "$OMARCHY_PATH/bin/omarchy-cursor-config"
+source "$OMARCHY_PATH/install/omarchy-cursor-config"
 
 size=$(cursor_config_read_env HYPRCURSOR_SIZE 2>/dev/null || cursor_config_read_env XCURSOR_SIZE 2>/dev/null || true)
 if [[ $size =~ ^[0-9]+$ ]]; then

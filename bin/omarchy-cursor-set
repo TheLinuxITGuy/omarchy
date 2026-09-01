@@ -32,7 +32,7 @@ if ! omarchy-cursor-list | grep -qx -- "$theme"; then
 fi
 
 # shellcheck source=omarchy-cursor-config
-source "$OMARCHY_PATH/bin/omarchy-cursor-config"
+source "$OMARCHY_PATH/install/omarchy-cursor-config"
 
 cursor_size=$(cursor_config_read_env HYPRCURSOR_SIZE 2>/dev/null || cursor_config_read_env XCURSOR_SIZE 2>/dev/null || true)
 [[ $cursor_size =~ ^[0-9]+$ ]] || cursor_size=24

@@ -27,7 +27,7 @@ if [[ ! $size =~ ^[0-9]+$ ]] || (( size < 1 || size > 512 )); then
 fi
 
 # shellcheck source=omarchy-cursor-config
-source "$OMARCHY_PATH/bin/omarchy-cursor-config"
+source "$OMARCHY_PATH/install/omarchy-cursor-config"
 
 theme=$(cursor_config_read_env HYPRCURSOR_THEME 2>/dev/null || cursor_config_read_env XCURSOR_THEME 2>/dev/null || true)
 
