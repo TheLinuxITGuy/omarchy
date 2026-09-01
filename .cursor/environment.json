@@ -1,0 +1,5 @@
+{
+  "name": "Omarchy development",
+  "user": "ubuntu",
+  "install": "./.cursor/cloud-agent-install.sh"
+}
