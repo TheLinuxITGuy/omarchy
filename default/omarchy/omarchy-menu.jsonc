@@ -109,6 +109,7 @@
   "style.cursor.bibata-modern-classic": {"icon":"󰇀","label":"Bibata Modern Classic","checked":"[[ \"$(omarchy-cursor-current)\" == \"Bibata-Modern-Classic\" ]]","action":"omarchy-cursor-set Bibata-Modern-Classic"},
   "style.cursor.bibata-modern-amber": {"icon":"󰇀","label":"Bibata Modern Amber","checked":"[[ \"$(omarchy-cursor-current)\" == \"Bibata-Modern-Amber\" ]]","action":"omarchy-cursor-set Bibata-Modern-Amber"},
   "style.cursor.bibata-modern-ice": {"icon":"󰇀","label":"Bibata Modern Ice","checked":"[[ \"$(omarchy-cursor-current)\" == \"Bibata-Modern-Ice\" ]]","action":"omarchy-cursor-set Bibata-Modern-Ice"},
+  "style.cursor.macos": {"icon":"󰇀","label":"macOS","checked":"[[ \"$(omarchy-cursor-current)\" == \"macOS\" ]]","action":"omarchy-cursor-set macOS"},
   "style.cursor.adwaita": {"icon":"󰇀","label":"Adwaita","when":"[[ -d /usr/share/icons/Adwaita/cursors ]]","checked":"[[ \"$(omarchy-cursor-current)\" == \"Adwaita\" ]]","action":"omarchy-cursor-set Adwaita"},
   "style.cursor.yaru": {"icon":"󰇀","label":"Yaru","when":"[[ -d /usr/share/icons/Yaru/cursors ]]","checked":"[[ \"$(omarchy-cursor-current)\" == \"Yaru\" ]]","action":"omarchy-cursor-set Yaru"},
   "style.bar": {"icon":"󰍜","label":"Menu Bar"},

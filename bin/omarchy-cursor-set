@@ -9,6 +9,8 @@
 set -euo pipefail
 
 BIBATA_BASE_URL="https://github.com/ful1e5/Bibata_Cursor/releases/download/v2.0.7"
+MACOS_CURSOR_URL="https://github.com/ful1e5/apple_cursor/releases/download/v2.0.1/macOS.tar.xz"
+MACOS_CURSOR_SHA256="9c6e5e13b068ce51a9e90a9abd6ce232ec7d25d4ceb05aa8ac76efbb99c76762"
 ICONS_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/icons"
 STATE_FILE="$HOME/.config/omarchy/cursor-theme"
 HYPR_CURSOR_FILE="$HOME/.config/hypr/cursor.lua"
@@ -21,7 +23,7 @@ theme_dir() {
   local name="$1"
   local dir
   for dir in "$ICONS_DIR/$name" "$HOME/.icons/$name" "/usr/share/icons/$name"; do
-    if [[ -d $dir/cursors ]]; then
+    if [[ -d $dir/cursors ]] && find "$dir/cursors" -mindepth 1 -maxdepth 1 -print -quit | grep -q .; then
       printf '%s\n' "$dir"
       return 0
     fi
@@ -54,6 +56,28 @@ ensure_bibata() {
   fi
 }
 
+ensure_macos() {
+  if theme_dir macOS >/dev/null; then
+    return 0
+  fi
+
+  mkdir -p "$ICONS_DIR"
+  local tmp archive
+  tmp=$(mktemp -d)
+  archive="$tmp/macOS.tar.xz"
+  trap 'rm -rf "$tmp"' RETURN
+
+  echo "Downloading macOS..."
+  curl -fsSL --retry 3 --retry-delay 1 -o "$archive" "$MACOS_CURSOR_URL"
+  printf '%s  %s\n' "$MACOS_CURSOR_SHA256" "$archive" | sha256sum --check --status
+  tar -xJf "$archive" -C "$ICONS_DIR" ./macOS
+
+  if ! theme_dir macOS >/dev/null; then
+    echo "Downloaded macOS, but the cursors directory was not found." >&2
+    return 1
+  fi
+}
+
 lua_escape() {
   printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g'
 }
@@ -73,6 +97,8 @@ esac
 
 if is_bibata "$theme"; then
   ensure_bibata "$theme"
+elif [[ $theme == macOS ]]; then
+  ensure_macos
 fi
 
 if ! theme_dir "$theme" >/dev/null; then
@@ -96,7 +122,10 @@ EOF
 cat >"$HYPR_CURSOR_FILE" <<EOF
 -- Managed by omarchy-cursor-set. Do not edit by hand.
 hl.env("XCURSOR_THEME", "$lua_theme")
-hl.env("HYPRCURSOR_THEME", "$lua_theme")
+hl.env("XCURSOR_SIZE", "$size")
+-- These menu themes use the legacy XCursor format. Hyprland's setcursor
+-- command accepts only Hyprcursor themes, so force its XCursor fallback.
+hl.config({ cursor = { enable_hyprcursor = false } })
 EOF
 
 if command -v gsettings >/dev/null 2>&1 && [[ -n ${DBUS_SESSION_BUS_ADDRESS:-} ]]; then
@@ -106,6 +135,8 @@ fi
 
 if command -v hyprctl >/dev/null 2>&1; then
   hyprctl reload >/dev/null
+  # With enable_hyprcursor=false, Hyprland's cursor manager loads this name
+  # from the XCursor theme path and applies it immediately.
   hyprctl setcursor "$theme" "$size" >/dev/null
 fi
 
