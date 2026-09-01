@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# omarchy:summary=List installed cursor themes
+# omarchy:examples=omarchy cursor list | omarchy cursor set Bibata-Modern-Classic
+
+find /usr/share/icons /usr/local/share/icons "$HOME/.local/share/icons" "$HOME/.icons" \
+  -maxdepth 1 -mindepth 1 -type d 2>/dev/null | while read -r dir; do
+  if [[ -f "$dir/manifest.hl" || -d "$dir/cursors" ]]; then
+    basename "$dir"
+  fi
+done | sort -u

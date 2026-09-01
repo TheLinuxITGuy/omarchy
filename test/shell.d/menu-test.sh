@@ -336,6 +336,16 @@ assertEqual(
   'omarchy-bar transparent toggle',
   'menu exposes Menu Bar transparency as a toggle'
 )
+assertEqual(
+  defaultById['style.cursor'].label,
+  'Change Cursor',
+  'menu exposes Change Cursor under Style'
+)
+assertEqual(
+  defaultById['style.cursor'].action,
+  'omarchy-cursor-open',
+  'menu opens the cursor picker from Style'
+)
 assertDeepEqual(
   defaultItems.filter(item => item.parent === 'setup.plugin').map(item => item.label),
   ['Enable Plugin', 'Disable Plugin', 'Add Plugin', 'Clone Plugin', 'Remove Plugin'],

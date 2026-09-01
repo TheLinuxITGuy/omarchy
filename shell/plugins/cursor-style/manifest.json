@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "id": "omarchy.cursor-style",
+  "name": "Change Cursor",
+  "version": "1.0.0",
+  "author": "Omarchy",
+  "description": "Pick the mouse cursor theme and size",
+  "kinds": [
+    "overlay"
+  ],
+  "keepLoaded": true,
+  "entryPoints": {
+    "overlay": "CursorStyle.qml"
+  }
+}

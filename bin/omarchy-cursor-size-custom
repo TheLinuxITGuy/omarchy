@@ -1,0 +1,28 @@
+#!/bin/bash
+
+# omarchy:summary=Set the cursor size to a custom value
+# omarchy:examples=omarchy cursor size custom
+
+usage() {
+  echo "Usage: omarchy-cursor-size-custom"
+}
+
+case "${1:-}" in
+  -h|--help)
+    usage
+    exit 0
+    ;;
+esac
+
+current=$(omarchy-cursor-size-current 2>/dev/null)
+prompt="Cursor size (px)"
+[[ $current =~ ^[0-9]+$ ]] && prompt="Cursor size (px) — current: $current"
+
+value=$(omarchy-menu-input "$prompt" --width 400) || exit 1
+
+if [[ ! $value =~ ^[0-9]+$ ]] || (( value < 1 || value > 512 )); then
+  omarchy-notification-send -u critical "Invalid cursor size" "$value is not a valid size."
+  exit 1
+fi
+
+exec omarchy-cursor-size-set "$value"

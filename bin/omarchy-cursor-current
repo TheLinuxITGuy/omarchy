@@ -1,0 +1,18 @@
+#!/bin/bash
+
+# omarchy:summary=Show the current cursor theme
+# omarchy:examples=omarchy cursor current
+
+config_file="$HOME/.config/hypr/hyprland.lua"
+
+if [[ -f $config_file ]]; then
+  theme=$(sed -n 's/.*HYPRCURSOR_THEME", *"\([^"]*\)".*/\1/p' "$config_file" | head -n1)
+  if [[ -n $theme ]]; then
+    echo "$theme"
+    exit 0
+  fi
+fi
+
+if [[ -n ${HYPRCURSOR_THEME:-} ]]; then
+  echo "$HYPRCURSOR_THEME"
+fi
