@@ -114,18 +114,25 @@ Item {
     root.rebuildDisplay()
   }
 
+  function runCursorCommand(script, value) {
+    var argv = [root.omarchyPath + "/bin/" + script]
+    if (value !== undefined && value !== null && value !== "")
+      argv.push(String(value))
+    Util.execArgv(argv)
+  }
+
   function activateIndex(index) {
     if (index < 0 || index >= root.filtered.length) return
     var row = root.filtered[index]
     if (root.sizeMode) {
       if (row.value === "custom") {
-        Util.execDetached("omarchy-cursor-size-custom")
+        root.runCursorCommand("omarchy-cursor-size-custom")
         customReloadTimer.restart()
         return
       }
-      Util.execDetached("omarchy-cursor-size-set " + Util.shellQuote(row.value))
+      root.runCursorCommand("omarchy-cursor-size-set", row.value)
     } else {
-      Util.execDetached("omarchy-cursor-set " + Util.shellQuote(row.value))
+      root.runCursorCommand("omarchy-cursor-set", row.value)
     }
     root.currentValue = row.value
     root.markCurrent(row.value)

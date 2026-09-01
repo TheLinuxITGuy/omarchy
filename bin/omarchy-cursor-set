@@ -31,52 +31,18 @@ if ! omarchy-cursor-list | grep -qx -- "$theme"; then
   exit 1
 fi
 
-hypr_config="$HOME/.config/hypr/hyprland.lua"
-mkdir -p "$(dirname "$hypr_config")"
+# shellcheck source=omarchy-cursor-config
+source "$OMARCHY_PATH/bin/omarchy-cursor-config"
 
-cursor_size=$(omarchy-cursor-size-current 2>/dev/null)
+cursor_size=$(cursor_config_read_env HYPRCURSOR_SIZE 2>/dev/null || cursor_config_read_env XCURSOR_SIZE 2>/dev/null || true)
 [[ $cursor_size =~ ^[0-9]+$ ]] || cursor_size=24
 
-hyprctl setcursor "$theme" "$cursor_size"
-
-update_env() {
-  local var="$1"
-  local value="$2"
-  if grep -q "hl.env(\"$var\"" "$hypr_config"; then
-    sed -i "s/hl.env(\"$var\", \"[^\"]*\")/hl.env(\"$var\", \"$value\")/" "$hypr_config"
-  else
-    echo "hl.env(\"$var\", \"$value\")" >>"$hypr_config"
-  fi
-}
-
-update_env XCURSOR_THEME "$theme"
-update_env HYPRCURSOR_THEME "$theme"
-
-if [[ -n ${DBUS_SESSION_BUS_ADDRESS:-} ]]; then
-  gsettings set org.gnome.desktop.interface cursor-theme "$theme" || true
-  gsettings set org.gnome.desktop.interface cursor-size "$cursor_size" || true
-fi
-
-update_gtk_settings() {
-  local ini="$1"
-  mkdir -p "$(dirname "$ini")"
-
-  if [[ ! -f $ini ]]; then
-    printf '[Settings]\ngtk-cursor-theme-name=%s\ngtk-cursor-theme-size=%s\n' "$theme" "$cursor_size" >"$ini"
-    return
-  fi
-
-  sed -i '/^gtk-cursor-theme-name=/d; /^gtk-cursor-theme-size=/d' "$ini"
-  if ! grep -q '^\[Settings\]' "$ini"; then
-    printf '\n[Settings]\n' >>"$ini"
-  fi
-  sed -i "/^\[Settings\]/a\\
-gtk-cursor-theme-name=$theme\\
-gtk-cursor-theme-size=$cursor_size" "$ini"
-}
-
-update_gtk_settings "$HOME/.config/gtk-3.0/settings.ini"
-update_gtk_settings "$HOME/.config/gtk-4.0/settings.ini"
+cursor_config_apply_live "$theme" "$cursor_size"
+cursor_config_update_env XCURSOR_THEME "$theme"
+cursor_config_update_env HYPRCURSOR_THEME "$theme"
+cursor_config_sync_gsettings "$theme" "$cursor_size"
+cursor_config_update_gtk "$theme" "$cursor_size"
+cursor_config_update_icons "$theme"
 
 omarchy-notification-send -g 󰧨 "Cursor theme set" "$theme" -t 5000
 omarchy-hook cursor-set "$theme"

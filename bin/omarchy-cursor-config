@@ -1,0 +1,118 @@
+# Shared cursor apply/persist helpers for omarchy-cursor-set and omarchy-cursor-size-set.
+
+HYPR_CURSOR_CONFIG="${HOME}/.config/hypr/looknfeel.lua"
+
+cursor_config_ensure_file() {
+  mkdir -p "$(dirname "$HYPR_CURSOR_CONFIG")"
+  if [[ ! -f $HYPR_CURSOR_CONFIG ]]; then
+    cat >"$HYPR_CURSOR_CONFIG" <<'EOF'
+-- Change the default Omarchy look'n'feel.
+EOF
+  fi
+}
+
+cursor_config_read_env() {
+  local var="$1"
+  local file value
+
+  for file in "$HYPR_CURSOR_CONFIG" "$HOME/.config/hypr/hyprland.lua"; do
+    [[ -f $file ]] || continue
+    value=$(sed -n "s/.*hl.env(\"$var\", \"\\([^\"]*\\)\".*/\\1/p" "$file" | head -n1)
+    if [[ -n $value ]]; then
+      printf '%s' "$value"
+      return 0
+    fi
+  done
+
+  value=${!var:-}
+  if [[ -n $value ]]; then
+    printf '%s' "$value"
+    return 0
+  fi
+
+  return 1
+}
+
+cursor_config_update_env() {
+  local var="$1"
+  local value="$2"
+
+  cursor_config_ensure_file
+
+  if grep -q "hl.env(\"$var\"" "$HYPR_CURSOR_CONFIG"; then
+    sed -i "s/hl.env(\"$var\", \"[^\"]*\")/hl.env(\"$var\", \"$value\")/" "$HYPR_CURSOR_CONFIG"
+  else
+    printf 'hl.env("%s", "%s")\n' "$var" "$value" >>"$HYPR_CURSOR_CONFIG"
+  fi
+}
+
+cursor_config_apply_live() {
+  local theme="$1"
+  local size="$2"
+
+  if [[ -n $theme && -n $size ]]; then
+    hyprctl setcursor "$theme" "$size" 2>/dev/null || true
+  fi
+
+  if [[ -n $theme ]]; then
+    hyprctl setenv XCURSOR_THEME "$theme" 2>/dev/null || true
+    hyprctl setenv HYPRCURSOR_THEME "$theme" 2>/dev/null || true
+  fi
+
+  if [[ -n $size ]]; then
+    hyprctl setenv XCURSOR_SIZE "$size" 2>/dev/null || true
+    hyprctl setenv HYPRCURSOR_SIZE "$size" 2>/dev/null || true
+  fi
+}
+
+cursor_config_update_gtk() {
+  local theme="$1"
+  local size="$2"
+  local ini
+
+  for ini in "$HOME/.config/gtk-3.0/settings.ini" "$HOME/.config/gtk-4.0/settings.ini"; do
+    mkdir -p "$(dirname "$ini")"
+
+    if [[ ! -f $ini ]]; then
+      printf '[Settings]\ngtk-cursor-theme-name=%s\ngtk-cursor-theme-size=%s\n' "$theme" "$size" >"$ini"
+      continue
+    fi
+
+    sed -i '/^gtk-cursor-theme-name=/d; /^gtk-cursor-theme-size=/d' "$ini"
+    if ! grep -q '^\[Settings\]' "$ini"; then
+      printf '\n[Settings]\n' >>"$ini"
+    fi
+    sed -i "/^\[Settings\]/a\\
+gtk-cursor-theme-name=$theme\\
+gtk-cursor-theme-size=$size" "$ini"
+  done
+}
+
+cursor_config_update_icons() {
+  local theme="$1"
+  local index="$HOME/.icons/default/index.theme"
+
+  [[ -n $theme ]] || return 0
+
+  mkdir -p "$(dirname "$index")"
+  cat >"$index" <<EOF
+[Icon Theme]
+Name=Default
+Comment=Default Cursor Theme
+Inherits=$theme
+EOF
+}
+
+cursor_config_sync_gsettings() {
+  local theme="$1"
+  local size="$2"
+
+  [[ -n ${DBUS_SESSION_BUS_ADDRESS:-} ]] || return 0
+
+  if [[ -n $theme ]]; then
+    gsettings set org.gnome.desktop.interface cursor-theme "$theme" 2>/dev/null || true
+  fi
+  if [[ -n $size ]]; then
+    gsettings set org.gnome.desktop.interface cursor-size "$size" 2>/dev/null || true
+  fi
+}

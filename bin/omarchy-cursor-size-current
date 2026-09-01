@@ -3,18 +3,12 @@
 # omarchy:summary=Show the current cursor size
 # omarchy:examples=omarchy cursor size current
 
-config_file="$HOME/.config/hypr/hyprland.lua"
+# shellcheck source=omarchy-cursor-config
+source "$OMARCHY_PATH/bin/omarchy-cursor-config"
 
-if [[ -f $config_file ]]; then
-  size=$(sed -n 's/.*HYPRCURSOR_SIZE", *"\([0-9]*\)".*/\1/p' "$config_file" | head -n1)
-  if [[ -n $size ]]; then
-    echo "$size"
-    exit 0
-  fi
-fi
-
-if [[ -n ${HYPRCURSOR_SIZE:-} ]]; then
-  echo "$HYPRCURSOR_SIZE"
+size=$(cursor_config_read_env HYPRCURSOR_SIZE 2>/dev/null || cursor_config_read_env XCURSOR_SIZE 2>/dev/null || true)
+if [[ $size =~ ^[0-9]+$ ]]; then
+  echo "$size"
   exit 0
 fi
 

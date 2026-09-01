@@ -3,16 +3,8 @@
 # omarchy:summary=Show the current cursor theme
 # omarchy:examples=omarchy cursor current
 
-config_file="$HOME/.config/hypr/hyprland.lua"
+# shellcheck source=omarchy-cursor-config
+source "$OMARCHY_PATH/bin/omarchy-cursor-config"
 
-if [[ -f $config_file ]]; then
-  theme=$(sed -n 's/.*HYPRCURSOR_THEME", *"\([^"]*\)".*/\1/p' "$config_file" | head -n1)
-  if [[ -n $theme ]]; then
-    echo "$theme"
-    exit 0
-  fi
-fi
-
-if [[ -n ${HYPRCURSOR_THEME:-} ]]; then
-  echo "$HYPRCURSOR_THEME"
-fi
+theme=$(cursor_config_read_env HYPRCURSOR_THEME 2>/dev/null || cursor_config_read_env XCURSOR_THEME 2>/dev/null || true)
+[[ -n $theme ]] && echo "$theme"

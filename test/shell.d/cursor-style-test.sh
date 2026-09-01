@@ -54,6 +54,7 @@ chmod +x "$tmp_dir/bin/omarchy-menu-input"
 
 export PATH="$tmp_dir/bin:$ROOT/bin:$PATH"
 export HOME="$tmp_dir/home"
+export OMARCHY_PATH="$ROOT"
 export DBUS_SESSION_BUS_ADDRESS="test"
 export HYPRCTL_LOG="$tmp_dir/hyprctl"
 export GSETTINGS_LOG="$tmp_dir/gsettings"
@@ -72,7 +73,7 @@ omarchy-cursor-list | rg -qx 'Fake-Dark' ||
   fail "cursor list finds the fake theme in HOME icons"
 pass "cursor list finds the fake theme in HOME icons"
 
-cat >"$HOME/.config/hypr/hyprland.lua" <<'EOF'
+cat >"$HOME/.config/hypr/looknfeel.lua" <<'EOF'
 hl.env("XCURSOR_THEME", "Fake-Dark")
 hl.env("HYPRCURSOR_THEME", "Fake-Dark")
 hl.env("XCURSOR_SIZE", "64")
@@ -89,14 +90,18 @@ pass "cursor theme current reads the Hyprland config"
 
 omarchy-cursor-size-set 32
 
-[[ $(tail -n 1 "$HYPRCTL_LOG") == "setcursor Fake-Dark 32" ]] ||
-  fail "cursor size applies the theme at the requested size" "$(tail -n 1 "$HYPRCTL_LOG")"
+rg -q 'setcursor Fake-Dark 32' "$HYPRCTL_LOG" ||
+  fail "cursor size applies the theme at the requested size"
 pass "cursor size applies the theme at the requested size"
 
-rg -q 'XCURSOR_SIZE", "32"' "$HOME/.config/hypr/hyprland.lua" &&
-  rg -q 'HYPRCURSOR_SIZE", "32"' "$HOME/.config/hypr/hyprland.lua" ||
+rg -q 'XCURSOR_SIZE", "32"' "$HOME/.config/hypr/looknfeel.lua" &&
+  rg -q 'HYPRCURSOR_SIZE", "32"' "$HOME/.config/hypr/looknfeel.lua" ||
   fail "cursor size persists both env variables"
 pass "cursor size persists both env variables"
+
+rg -q 'setenv XCURSOR_SIZE 32' "$HYPRCTL_LOG" ||
+  fail "cursor size updates live Hyprland env"
+pass "cursor size updates live Hyprland env"
 
 if omarchy-cursor-size-set 0; then
   fail "cursor size rejects zero"
@@ -110,19 +115,28 @@ pass "cursor size rejects non-numeric sizes"
 
 MENU_INPUT_VALUE=55 omarchy-cursor-size-custom
 
-[[ $(tail -n 1 "$HYPRCTL_LOG") == "setcursor Fake-Dark 55" ]] ||
-  fail "custom size applies the typed value" "$(tail -n 1 "$HYPRCTL_LOG")"
+rg -q 'setcursor Fake-Dark 55' "$HYPRCTL_LOG" ||
+  fail "custom size applies the typed value"
 pass "custom size applies the typed value"
 
 omarchy-cursor-set Fake-Dark
 
-[[ $(tail -n 1 "$HYPRCTL_LOG") == "setcursor Fake-Dark 55" ]] ||
-  fail "cursor theme applies the theme" "$(tail -n 1 "$HYPRCTL_LOG")"
+rg -q 'setcursor Fake-Dark 55' "$HYPRCTL_LOG" ||
+  fail "cursor theme applies the theme"
 pass "cursor theme applies the theme"
+
+rg -q 'setenv HYPRCURSOR_THEME Fake-Dark' "$HYPRCTL_LOG" ||
+  fail "cursor theme updates live Hyprland env"
+pass "cursor theme updates live Hyprland env"
 
 tail -n 1 "$HOOK_LOG" | rg -q 'cursor-set Fake-Dark' ||
   fail "cursor theme runs the theme hook"
 pass "cursor theme runs the theme hook"
+
+[[ -f $HOME/.icons/default/index.theme ]] &&
+  rg -q 'Inherits=Fake-Dark' "$HOME/.icons/default/index.theme" ||
+  fail "cursor theme writes the XWayland icon fallback"
+pass "cursor theme writes the XWayland icon fallback"
 
 if omarchy-cursor-set 'Bad"Name' 2>/dev/null; then
   fail "cursor theme rejects invalid theme names"
@@ -133,6 +147,11 @@ if omarchy-cursor-set Not-Installed 2>/dev/null; then
   fail "cursor theme rejects unknown themes"
 fi
 pass "cursor theme rejects unknown themes"
+
+rg -q 'runCursorCommand' "$ROOT/shell/plugins/cursor-style/CursorStyle.qml" &&
+  rg -q 'execArgv' "$ROOT/shell/plugins/cursor-style/CursorStyle.qml" ||
+  fail "overlay invokes cursor scripts through execArgv"
+pass "overlay invokes cursor scripts through execArgv"
 
 rg -q 'toggle omarchy.cursor-style' "$ROOT/bin/omarchy-cursor-open" ||
   fail "cursor open launcher toggles the first-party overlay"
